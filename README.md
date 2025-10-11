@@ -22,7 +22,7 @@ sudo apt-get update    #更新检查
 sudo apt-get install libcv-dev   /*安装opencv
 sudo apt-get install libopencv-dev    */
 ### 3.VSC配置
-大致思路：先疯狂apt，把编译器啥的都下载下来，再把tasks.json文件（编译任务配置）修改位OpenCV专用设置，然后创建launch.json文件让他帮我能自动编译和调试
+大致思路：先疯狂apt，把编译器啥的都下载下来，再把tasks.json文件（编译任务配置）修改位OpenCV专用设置，然后创建launch.json文件让他帮我能自动编译和调试  还有tasks.json
 {
   "version": "2.0.0",
   "tasks": [
