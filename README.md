@@ -55,8 +55,9 @@ sudo apt-get install libopencv-dev    */
     }
     
   ]
-}
- "version": "0.2.0",
+},
+{
+  "version": "0.2.0",
   "configurations": [
       // 调试配置1：普通C++程序（normal_app）
       {
@@ -101,6 +102,7 @@ sudo apt-get install libopencv-dev    */
         "stopAll": true        // 停止复合配置时，同时停止所有子调试会话（推荐）
     }
 ]
+}
 
 ### 4.Git配置
 1. sudo apt update
