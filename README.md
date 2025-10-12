@@ -22,58 +22,86 @@ sudo apt-get update    #更新检查
 sudo apt-get install libcv-dev   /*安装opencv
 sudo apt-get install libopencv-dev    */
 ### 3.VSC配置
-大致思路：先疯狂apt，把编译器啥的都下载下来，再把tasks.json文件（编译任务配置）修改位OpenCV专用设置，然后创建launch.json文件让他帮我能自动编译和调试  还有tasks.json
+大致思路：先疯狂apt，把编译器啥的都下载下来，再把tasks.json文件（编译任务配置）修改位OpenCV专用设置，然后创建launch.json文件让他帮我能自动编译和调试  还有tasks.json,同时配置上了OpenCV和c/cpp。
 {
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build OpenCV",  // 任务名称（需与launch.json的preLaunchTask一致）
-      "type": "shell",         // 用shell执行命令（支持管道、变量）
-      "command": "g++",        // 编译器（g++）
+      "label": "build_normal",  // 任务名称（需与launch.json的preLaunchTask一致）
+      "type": "shell",
+      "command": "g++",
       "args": [
-        "-g",                // 生成调试信息（必须，否则无法调试）
-        "${file}",           // 当前编辑的.cpp文件（输入文件）
-        "-o",                // 输出可执行文件
-        "${fileDirname}/${fileBasenameNoExtension}",  // 可执行文件路径（如./test）
-        // OpenCV编译参数（通过pkg-config获取，必须正确）
-        "$(pkg-config --cflags opencv4)",  // OpenCV头文件路径（如-I/usr/include/opencv4）
-        "$(pkg-config --libs opencv4)"     // OpenCV库文件路径（如-lopencv_core -lopencv_highgui）
+          "-g",                  // 生成调试信息（必须）
+          "${workspaceFolder}/normal_app.cpp",  // 普通程序的路径
+          "-o",                  // 输出可执行文件
+          "${workspaceFolder}/normal_app"       // 普通程序的可执行文件路径
+      ],
+      "group": "build",
+      "problemMatcher": ["$gcc"]  // 识别GCC编译错误
+  },
+    {
+      "label": "Build OpenCV",  // 任务名称，需与launch.json的preLaunchTask一致
+      "type": "shell",          // 类型为shell，让Shell处理命令替换
+      "command": "bash",        // 使用bash执行命令
+      "args": [
+        "-c",                   // 执行字符串形式的命令
+        "g++ ${file} -o ${fileDirname}/${fileBasenameNoExtension} $(pkg-config --cflags --libs opencv4)"  // 完整编译命令
       ],
       "group": {
-        "kind": "build",     // 将任务归到"build"组（可通过Ctrl+Shift+B运行）
-        "isDefault": true    // 设置为默认build任务
+        "kind": "build",
+        "isDefault": true       // 设置为默认编译任务（Ctrl+Shift+B直接运行）
       },
-      "problemMatcher": ["$gcc"],  // 识别gcc的错误输出（显示在"问题"面板）
-      "detail": "Compiler: g++ (OpenCV 4.5.x)"  // 任务描述（可选）
+      "problemMatcher": ["$gcc"]  // 匹配GCC错误信息
     }
+    
   ]
 }
-{
-    "version": "0.2.0",
-    "configurations": [
+ "version": "0.2.0",
+  "configurations": [
+      // 调试配置1：普通C++程序（normal_app）
+      {
+          "name": "debug_normal",  // 配置名称（需在复合配置中引用）
+          "type": "cppdbg",
+          "request": "launch",
+          "program": "${workspaceFolder}/normal_app",  // 可执行文件路径（与tasks.json一致）
+          "args": [],             // 程序运行参数（无则留空）
+          "stopAtEntry": false,   // 是否在main函数入口暂停（新手可设为true）
+          "cwd": "${workspaceFolder}",  // 工作目录
+          "externalConsole": false,      // 使用VSCode内置终端（推荐）
+          "MIMode": "gdb",               // 调试器（Linux默认GDB）
+          "miDebuggerPath": "/usr/bin/gdb",  // GDB路径（通过`which gdb`验证）
+          "preLaunchTask": "build_normal"   // 调试前执行的构建任务（与tasks.json的label一致）
+      },
+    {
+      "name": "Launch OpenCV",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/${fileBasenameNoExtension}", // 运行的可执行文件
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",  // gdb路径（WSL默认路径）
+      "preLaunchTask": "Build OpenCV",   // 调试前执行的任务，必须和tasks.json的label一致
+      "setupCommands": [
         {
-            "name": "Launch OpenCV",  // 调试配置名称（显示在调试面板）
-            "type": "cppdbg",        // 调试类型（C++调试，使用gdb）
-            "request": "launch",     // 启动调试（而非附加到已运行程序）
-            "program": "${fileDirname}/${fileBasenameNoExtension}",  // 可执行文件路径（与tasks.json的输出一致）
-            "args": [],              // 程序运行的命令行参数（可选，如图片路径）
-            "stopAtEntry": false,    // 是否在main函数入口处停止（可选，设为true方便调试）
-            "cwd": "${fileDirname}", // 当前工作目录（程序运行的路径，如./）
-            "environment": [],       // 环境变量（可选）
-            "externalConsole": false,// 是否使用外部控制台（可选，设为true显示命令行窗口）
-            "MIMode": "gdb",         // 调试器模式（gdb）
-            "miDebuggerPath": "/usr/bin/gdb",  // 调试器路径（WSL Ubuntu的默认路径，必须正确）
-            "preLaunchTask": "Build OpenCV",   // 调试前运行的任务（必须与tasks.json的label一致）
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",  // 启用gdb的漂亮打印（显示结构体等）
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
         }
-    ]
-}
+      ]
+    }
+  ],
+  "compounds": [
+    {
+        "name": "debug_both",  // 复合配置名称（显示在调试菜单中）
+        "configurations": ["debug_normal", "Launch OpenCV"],  // 组合的调试配置名称（需与上面的name一致）
+        "stopAll": true        // 停止复合配置时，同时停止所有子调试会话（推荐）
+    }
+]
+
 ### 4.Git配置
 1. sudo apt update
 sudo apt install git
